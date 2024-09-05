@@ -13,6 +13,9 @@ export async function createScreenSession(
     },
   });
   let mediaRecorder;
+  let audioContext = new AudioContext();
+  let destination = audioContext.createMediaStreamDestination();
+  let speakerSource;
 
   session.addListener("RecognitionStarted", () => {
     console.log("RecognitionStarted");
@@ -24,7 +27,6 @@ export async function createScreenSession(
   });
 
   session.addListener("AddTranscript", async (message) => {
-    // console.log("AddTranscript", message);
     await messageHandler(message?.metadata?.transcript);
   });
 
@@ -35,11 +37,15 @@ export async function createScreenSession(
   session.start({ transcription_config }).then(async () => {
     //setup audio stream
     const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
       audio: true,
     });
 
-    mediaRecorder = new MediaRecorder(stream);
+    speakerSource = audioContext.createMediaStreamSource(stream);
+    speakerSource.connect(destination);
+
+    mediaRecorder = new MediaRecorder(destination.stream, {
+      mimeType: "audio/webm",
+    });
 
     mediaRecorder.start(1000);
 
@@ -53,6 +59,15 @@ export async function createScreenSession(
     if (mediaRecorder) {
       mediaRecorder?.stop();
       mediaRecorder?.stream?.getTracks()?.forEach((track) => track?.stop());
+
+      speakerSource?.disconnect();
+      speakerSource?.mediaStream
+        ?.getTracks()
+        ?.forEach((track) => track?.stop());
+
+      audioContext?.close();
+      mediaRecorder = null;
+      speakerSource = null;
     }
   }
   return { session, stopMediaRecorder };
