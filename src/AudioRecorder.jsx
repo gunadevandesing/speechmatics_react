@@ -20,6 +20,7 @@ export async function createMicrophoneSession(
 
   session.addListener("Error", (error) => {
     console.log("session error", error);
+    alert("Something went wrong in Agent audio");
   });
 
   session.addListener("AddTranscript", (message) => {
@@ -49,8 +50,10 @@ export async function createMicrophoneSession(
   });
 
   function stopMediaRecorder() {
-    mediaRecorder.stop();
-    mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+    if (mediaRecorder) {
+      mediaRecorder?.stop();
+      mediaRecorder?.stream?.getTracks()?.forEach((track) => track?.stop());
+    }
   }
   return { session, stopMediaRecorder };
 }
