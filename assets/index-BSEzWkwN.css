@@ -1,0 +1,1 @@
+.conversation-container{display:flex;flex-direction:column;gap:10px;padding:10px;width:calc(100vw - 40px);max-height:70vh;overflow-y:scroll}.conversation-container div{padding:10px;border-radius:5px;background-color:#f1f1f1;width:fit-content}.action-buttons{display:flex;gap:10px}
