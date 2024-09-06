@@ -13,6 +13,7 @@ export async function createMicrophoneSession(
     },
   });
   let mediaRecorder;
+  let microphoneSource;
 
   session.addListener("RecognitionStarted", () => {
     console.log("RecognitionStarted");
@@ -34,8 +35,13 @@ export async function createMicrophoneSession(
   session.start({ transcription_config }).then(async () => {
     //setup audio stream
     let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    let audioContext = new AudioContext();
+    let destination = audioContext.createMediaStreamDestination();
 
-    mediaRecorder = new MediaRecorder(stream, {
+    microphoneSource = audioContext.createMediaStreamSource(stream);
+    microphoneSource.connect(destination);
+
+    mediaRecorder = new MediaRecorder(destination.stream, {
       mimeType: "audio/webm;codecs=opus",
       audioBitsPerSecond: 16000,
     });
@@ -53,6 +59,13 @@ export async function createMicrophoneSession(
     if (mediaRecorder) {
       mediaRecorder?.stop();
       mediaRecorder?.stream?.getTracks()?.forEach((track) => track?.stop());
+      mediaRecorder = null;
+
+      microphoneSource.disconnect();
+      microphoneSource?.mediaStream
+        ?.getTracks()
+        ?.forEach((track) => track?.stop());
+      microphoneSource = null;
     }
   }
   return { session, stopMediaRecorder };

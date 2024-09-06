@@ -13,8 +13,6 @@ export async function createScreenSession(
     },
   });
   let mediaRecorder;
-  let audioContext = new AudioContext();
-  let destination = audioContext.createMediaStreamDestination();
   let speakerSource;
 
   session.addListener("RecognitionStarted", () => {
@@ -40,6 +38,9 @@ export async function createScreenSession(
       audio: true,
     });
 
+    let audioContext = new AudioContext();
+    let destination = audioContext.createMediaStreamDestination();
+
     speakerSource = audioContext.createMediaStreamSource(stream);
     speakerSource.connect(destination);
 
@@ -59,14 +60,12 @@ export async function createScreenSession(
     if (mediaRecorder) {
       mediaRecorder?.stop();
       mediaRecorder?.stream?.getTracks()?.forEach((track) => track?.stop());
+      mediaRecorder = null;
 
       speakerSource?.disconnect();
       speakerSource?.mediaStream
         ?.getTracks()
         ?.forEach((track) => track?.stop());
-
-      audioContext?.close();
-      mediaRecorder = null;
       speakerSource = null;
     }
   }
