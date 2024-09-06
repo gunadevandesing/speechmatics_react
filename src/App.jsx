@@ -114,21 +114,21 @@ function App() {
           onClick={startTranscription}
           disabled={status === "started"}
         >
-          start
+          Start
         </button>
         <button
           type="button"
           onClick={stopTranscription}
           disabled={status === "stopped"}
         >
-          stop
+          Stop
         </button>
         <button
           type="button"
           onClick={handleReset}
           disabled={status === "started"}
         >
-          reset
+          Reset
         </button>
       </div>
       <div
