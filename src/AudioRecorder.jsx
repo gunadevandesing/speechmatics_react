@@ -42,8 +42,7 @@ export async function createMicrophoneSession(
     microphoneSource.connect(destination);
 
     mediaRecorder = new MediaRecorder(destination.stream, {
-      mimeType: "audio/webm;codecs=opus",
-      audioBitsPerSecond: 16000,
+      mimeType: "audio/webm",
     });
 
     mediaRecorder.start(1000);

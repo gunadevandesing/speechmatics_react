@@ -30,6 +30,7 @@ function App() {
   }, [conversation]);
 
   const handleMessage = useCallback(async (type, text) => {
+    console.log({ type, text });
     setConversation((prevConversation) => {
       const lastMessageIndex = prevConversation.length - 1;
       let lastMessageFrom = prevConversation[lastMessageIndex]?.type ?? "";
@@ -50,15 +51,21 @@ function App() {
     });
   }, []);
 
-  const handelMicrophoneTranscription = async (message) => {
-    if (!nullValues.includes(message) && !["", "."].includes(message.trim())) {
-      await handleMessage("Agent", message);
+  const handelMicrophoneTranscription = async (micMessage) => {
+    if (
+      !nullValues.includes(micMessage) &&
+      !["", "."].includes(micMessage.trim())
+    ) {
+      handleMessage("Agent", micMessage);
     }
   };
 
-  const handelScreenTranscription = async (message) => {
-    if (!nullValues.includes(message) && !["", "."].includes(message.trim())) {
-      await handleMessage("User", message);
+  const handelScreenTranscription = async (speakerMessage) => {
+    if (
+      !nullValues.includes(speakerMessage) &&
+      !["", "."].includes(speakerMessage.trim())
+    ) {
+      handleMessage("User", speakerMessage);
     }
   };
 
@@ -80,7 +87,7 @@ function App() {
   const stopTranscription = async () => {
     sessionRef?.current?.session.stop();
     sessionRef?.current?.stopMediaRecorder();
-    screenSessionRef?.current?.session?.stop();
+    screenSessionRef?.current?.speakerSession?.stop();
     screenSessionRef?.current?.stopMediaRecorder();
 
     sessionRef.current = {};

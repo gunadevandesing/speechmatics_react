@@ -6,33 +6,33 @@ export async function createScreenSession(
   transcription_config,
   messageHandler
 ) {
-  const session = new RealtimeSession({
+  const speakerSession = new RealtimeSession({
     apiKey: async () => {
       const response = await getJwt();
       return response;
     },
   });
-  let mediaRecorder;
+  let speakerMediaRecorder;
   let speakerSource;
 
-  session.addListener("RecognitionStarted", () => {
+  speakerSession.addListener("RecognitionStarted", () => {
     console.log("RecognitionStarted");
   });
 
-  session.addListener("Error", (error) => {
+  speakerSession.addListener("Error", (error) => {
     console.log("session error", error);
     alert("Something went wrong in User audio");
   });
 
-  session.addListener("AddTranscript", async (message) => {
+  speakerSession.addListener("AddTranscript", async (message) => {
     await messageHandler(message?.metadata?.transcript);
   });
 
-  session.addListener("EndOfTranscript", () => {
+  speakerSession.addListener("EndOfTranscript", () => {
     console.log("EndOfTranscript");
   });
 
-  session.start({ transcription_config }).then(async () => {
+  speakerSession.start({ transcription_config }).then(async () => {
     //setup audio stream
     const stream = await navigator.mediaDevices.getDisplayMedia({
       audio: true,
@@ -44,23 +44,25 @@ export async function createScreenSession(
     speakerSource = audioContext.createMediaStreamSource(stream);
     speakerSource.connect(destination);
 
-    mediaRecorder = new MediaRecorder(destination.stream, {
+    speakerMediaRecorder = new MediaRecorder(destination.stream, {
       mimeType: "audio/webm",
     });
 
-    mediaRecorder.start(1000);
+    speakerMediaRecorder.start(1000);
 
-    mediaRecorder.ondataavailable = async (event) => {
+    speakerMediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
-        await session.sendAudio(event.data);
+        speakerSession.sendAudio(event.data);
       }
     };
   });
   function stopMediaRecorder() {
-    if (mediaRecorder) {
-      mediaRecorder?.stop();
-      mediaRecorder?.stream?.getTracks()?.forEach((track) => track?.stop());
-      mediaRecorder = null;
+    if (speakerMediaRecorder) {
+      speakerMediaRecorder?.stop();
+      speakerMediaRecorder?.stream
+        ?.getTracks()
+        ?.forEach((track) => track?.stop());
+      speakerMediaRecorder = null;
 
       speakerSource?.disconnect();
       speakerSource?.mediaStream
@@ -69,5 +71,5 @@ export async function createScreenSession(
       speakerSource = null;
     }
   }
-  return { session, stopMediaRecorder };
+  return { speakerSession, stopMediaRecorder };
 }
