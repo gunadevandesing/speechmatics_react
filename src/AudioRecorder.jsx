@@ -12,8 +12,9 @@ export async function createMicrophoneSession(
       return response;
     },
   });
-  let mediaRecorder;
+  let micMediaRecorder;
   let microphoneSource;
+  let microphoneAudio = [];
 
   session.addListener("RecognitionStarted", () => {
     console.log("RecognitionStarted");
@@ -34,37 +35,73 @@ export async function createMicrophoneSession(
 
   session.start({ transcription_config }).then(async () => {
     //setup audio stream
-    let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    let audioContext = new AudioContext();
-    let destination = audioContext.createMediaStreamDestination();
 
-    microphoneSource = audioContext.createMediaStreamSource(stream);
-    microphoneSource.connect(destination);
+    let audioDevices = await navigator.mediaDevices.enumerateDevices();
+    
+    let microphoneDevices = audioDevices.filter(
+      (device) => device.kind === "audioinput"
+    );
+console.log({microphoneDevices})
+    let defaultDevice = microphoneDevices.find(
+      (device) => device.deviceId === "default"
+    );
 
-    mediaRecorder = new MediaRecorder(destination.stream, {
+    let micDevice = microphoneDevices.find(
+      (device) => device.label === defaultDevice.label.split("Default - ")[1]
+    );  
+
+console.log({micDevice});
+    let micStream = await navigator.mediaDevices.getUserMedia({ audio: 
+      {
+        deviceId:micDevice?.deviceId,
+        echoCancellation: true,
+        noiseSuppression:true,
+        autoGainControl:true,
+      }
+     });
+
+     let micAudioContext = new AudioContext();
+     let micDestination = micAudioContext.createMediaStreamDestination();
+
+     microphoneSource = micAudioContext.createMediaStreamSource(micStream);
+     microphoneSource.connect(micDestination);
+
+     micMediaRecorder = new MediaRecorder(micDestination.stream, {
       mimeType: "audio/webm",
     });
 
-    mediaRecorder.start(1000);
+    micMediaRecorder.start(1000);
 
-    mediaRecorder.ondataavailable = (event) => {
+    micMediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         session.sendAudio(event.data);
+        microphoneAudio.push(event.data);
       }
     };
   });
 
   function stopMediaRecorder() {
-    if (mediaRecorder) {
-      mediaRecorder?.stop();
-      mediaRecorder?.stream?.getTracks()?.forEach((track) => track?.stop());
-      mediaRecorder = null;
+    if (micMediaRecorder) {
+      micMediaRecorder?.stop();
+      micMediaRecorder?.stream?.getTracks()?.forEach((track) => track?.stop());
+      micMediaRecorder = null;
 
-      microphoneSource.disconnect();
-      microphoneSource?.mediaStream
-        ?.getTracks()
-        ?.forEach((track) => track?.stop());
-      microphoneSource = null;
+       microphoneSource.disconnect();
+       microphoneSource?.mediaStream
+         ?.getTracks()
+         ?.forEach((track) => track?.stop());
+       microphoneSource = null;
+
+      // const blob = new Blob(microphoneAudio, { type: "audio/webm" });
+      // const url = URL.createObjectURL(blob);
+
+      // const a = document.createElement("a");
+      // a.href = url;
+      // a.download = "mic.webm";
+      // a.click();
+      // URL.revokeObjectURL(url);
+      microphoneAudio = [];
+
     }
   }
   return { session, stopMediaRecorder };

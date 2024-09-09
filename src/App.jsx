@@ -29,7 +29,7 @@ function App() {
     }
   }, [conversation]);
 
-  const handleMessage = useCallback(async (type, text) => {
+  const handleMessage = useCallback((type, text) => {
     console.log({ type, text });
     setConversation((prevConversation) => {
       const lastMessageIndex = prevConversation.length - 1;
@@ -39,9 +39,9 @@ function App() {
         return [...prevConversation, { type, text }];
       } else {
         if (lastMessageFrom === type) {
-          const lastMessage = { ...prevConversation[lastMessageIndex] };
+          let lastMessage = { ...prevConversation[lastMessageIndex] };
           lastMessage.text += text;
-          const newConversation = [...prevConversation];
+          let newConversation = [...prevConversation];
           newConversation[lastMessageIndex] = lastMessage;
           return newConversation;
         } else {
@@ -51,7 +51,7 @@ function App() {
     });
   }, []);
 
-  const handelMicrophoneTranscription = async (micMessage) => {
+  const handelMicrophoneTranscription = (micMessage) => {
     if (
       !nullValues.includes(micMessage) &&
       !["", "."].includes(micMessage.trim())
@@ -60,7 +60,7 @@ function App() {
     }
   };
 
-  const handelScreenTranscription = async (speakerMessage) => {
+  const handelScreenTranscription = (speakerMessage) => {
     if (
       !nullValues.includes(speakerMessage) &&
       !["", "."].includes(speakerMessage.trim())

@@ -14,6 +14,7 @@ export async function createScreenSession(
   });
   let speakerMediaRecorder;
   let speakerSource;
+  let speakerAudio = [];
 
   speakerSession.addListener("RecognitionStarted", () => {
     console.log("RecognitionStarted");
@@ -34,17 +35,20 @@ export async function createScreenSession(
 
   speakerSession.start({ transcription_config }).then(async () => {
     //setup audio stream
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      audio: true,
+    const speakerStream = await navigator.mediaDevices.getDisplayMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression:true,
+      },
     });
 
-    let audioContext = new AudioContext();
-    let destination = audioContext.createMediaStreamDestination();
+    let speakerAudioContext = new AudioContext();
+    let speakerDestination = speakerAudioContext.createMediaStreamDestination();
 
-    speakerSource = audioContext.createMediaStreamSource(stream);
-    speakerSource.connect(destination);
+    speakerSource = speakerAudioContext.createMediaStreamSource(speakerStream);
+    speakerSource.connect(speakerDestination);
 
-    speakerMediaRecorder = new MediaRecorder(destination.stream, {
+    speakerMediaRecorder = new MediaRecorder(speakerDestination.stream, {
       mimeType: "audio/webm",
     });
 
@@ -53,6 +57,7 @@ export async function createScreenSession(
     speakerMediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         speakerSession.sendAudio(event.data);
+        speakerAudio.push(event.data);
       }
     };
   });
@@ -69,6 +74,16 @@ export async function createScreenSession(
         ?.getTracks()
         ?.forEach((track) => track?.stop());
       speakerSource = null;
+
+      // const blob = new Blob(speakerAudio, { type: "audio/webm" });
+      // const url = URL.createObjectURL(blob);
+
+      // const a = document.createElement("a");
+      // a.href = url;
+      // a.download = "speaker.webm";
+      // a.click();
+      // URL.revokeObjectURL(url);
+      speakerAudio = [];
     }
   }
   return { speakerSession, stopMediaRecorder };
