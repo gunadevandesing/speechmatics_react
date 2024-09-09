@@ -39,21 +39,21 @@ export async function createMicrophoneSession(
     let audioDevices = await navigator.mediaDevices.enumerateDevices();
     
     let microphoneDevices = audioDevices.filter(
-      (device) => device.kind === "audioinput"
+      (device) => device?.kind === "audioinput"
     );
 console.log({microphoneDevices})
     let defaultDevice = microphoneDevices.find(
-      (device) => device.deviceId === "default"
+      (device) => device?.deviceId === "default"
     );
 
     let micDevice = microphoneDevices.find(
-      (device) => device.label === defaultDevice.label.split("Default - ")[1]
+      (device) => device?.label === defaultDevice?.label?.split("Default - ")[1]
     );  
 
 console.log({micDevice});
     let micStream = await navigator.mediaDevices.getUserMedia({ audio: 
       {
-        deviceId:micDevice?.deviceId,
+        deviceId:micDevice?.deviceId ?? undefined,
         echoCancellation: true,
         noiseSuppression:true,
         autoGainControl:true,
